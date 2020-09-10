@@ -1,28 +1,37 @@
-const Vue = require('vue')
-const server = require('express')()
-const renderer = require('vue-server-renderer').createRenderer()
+const Vue = require('vue');
+const server = require('express')();
+
+const template = require('fs').readFileSync('./index.template.html', 'utf-8');
+
+const renderer = require('vue-server-renderer').createRenderer({
+    template,
+});
+
+const context = {
+    title: 'vue ssr',
+    metas: `
+        <meta name="keyword" content="vue,ssr">
+        <meta name="description" content="vue srr demo">
+    `,
+};
 
 server.get('*', (req, res) => {
     const app = new Vue({
         data: {
             url: req.url
         },
-        template: `<div>The visited URL is: {{ url }}</div>`
-    })
+        template: `<div>The visited URL is: {{ url }}</div>`,
+    });
 
-    renderer.renderToString(app, (err, html) => {
-        if (err) {
-            res.status(500).end('Internal Server Error')
-            return
-        }
-        res.end(`
-      <!DOCTYPE html>
-      <html lang="en">
-        <head><title>Hello</title></head>
-        <body>${html}</body>
-      </html>
-    `)
-    })
+    renderer
+        .renderToString(app, context, (err, html) => {
+            console.log(html);
+            if (err) {
+                res.status(500).end('Internal Server Error')
+                return;
+            }
+            res.end(html);
+        });
 })
 
-server.listen(8080)
+server.listen(8080);
